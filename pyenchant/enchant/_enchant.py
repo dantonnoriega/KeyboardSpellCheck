@@ -9,7 +9,7 @@
 #
 # This library is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPsE.  See the GNU
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 # Lesser General Public License for more details.
 #
 # You should have received a copy of the GNU Lesser General Public
@@ -32,7 +32,7 @@
     enchant._enchant:  ctypes-based wrapper for enchant C library
 
     This module implements the low-level interface to the underlying
-    C library for enchant.  The interface is based on ctypes and tries 
+    C library for enchant.  The interface is based on ctypes and tries
     to do as little as possible while making the higher-level components
     easier to write.
 
@@ -63,13 +63,20 @@ e = None
 
 def _e_path_possibilities():
     """Generator yielding possible locations of the enchant library."""
+    # Allow it to be overridden using an environment variable.
     yield os.environ.get("PYENCHANT_LIBRARY_PATH")
+    # For linuxish systems, allow default soname lookup a chance to succeed.
+    if sys.platform not in ("win32", "darwin"):
+        yield "libenchant.so.1.6.0"
+        yield "libenchant.so.1"
+        yield "libenchant.so"
+    # See if ctypes can find the library for us, under various names.
     yield find_library("enchant")
     yield find_library("libenchant")
     yield find_library("libenchant-1")
+    # Special-case handling for enchant installed by macports.
     if sys.platform == 'darwin':
-         # enchant lib installed by macports
-         yield "/opt/local/lib/libenchant.dylib"
+        yield "/opt/local/lib/libenchant.dylib"
 
 
 # On win32 we ship a bundled version of the enchant DLLs.
@@ -106,10 +113,12 @@ if e is None and sys.platform == "darwin":
   else:
       # Enchant doesn't natively support relocatable binaries on OSX.
       # We fake it by patching the enchant source to expose a char**, which
-      # we can write the runtime path into ourelves.
+      # we can write the runtime path into ourselves.
       e = CDLL(e_path)
       try:
           e_dir = os.path.dirname(os.path.dirname(e_path))
+          if isinstance(e_dir,unicode):
+              e_dir = e_dir.encode(sys.getfilesystemencoding())
           prefix_dir = POINTER(c_char_p).in_dll(e,"enchant_prefix_dir_p")
           prefix_dir.contents = c_char_p(e_dir)
       except AttributeError:
@@ -130,7 +139,10 @@ if e is None:
 
 # No usable enchant install was found :-(
 if e is None:
-   raise ImportError("enchant C library not found")
+   msg = "The 'enchant' C library was not found. "\
+         "Please install it via your OS package manager, "\
+         "or use a pre-built binary wheel from PyPI."
+   raise ImportError(msg)
 
 
 # Define various callback function types
@@ -297,12 +309,6 @@ dict_is_removed1.restype = c_int
 def dict_is_removed(dict,word):
     return dict_is_removed1(dict,word,len(word))
 
-dict_is_in_session1 = e.enchant_dict_is_in_session
-dict_is_in_session1.argtypes = [t_dict,c_char_p,c_size_t]
-dict_is_in_session1.restype = c_int
-def dict_is_in_session(dict,word):
-    return dict_is_in_session1(dict,word,len(word))
-
 dict_store_replacement1 = e.enchant_dict_store_replacement
 dict_store_replacement1.argtypes = [t_dict,c_char_p,c_size_t,c_char_p,c_size_t]
 dict_store_replacement1.restype = None
@@ -324,5 +330,4 @@ def dict_describe(dict,cbfunc):
     def cbfunc1(tag,name,desc,file,data):
         cbfunc(tag,name,desc,file)
     dict_describe1(dict,t_dict_desc_func(cbfunc1),None)
-
 

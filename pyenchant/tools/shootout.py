@@ -53,7 +53,7 @@ lang = "en_US"
 #wordsfile = "/usr/share/dict/words"
 wordsfile = "words"
 
-# Corrections to make the the 'correct' words in the tests
+# Corrections to make the 'correct' words in the tests
 # This is so we can use unmodified tests published by third parties
 corrections = (("caesar","Caesar"),("confucianism","Confucianism"),("february","February"),("gandhi","Gandhi"),("muslims","Muslims"),("israel","Israel"))
 
@@ -109,7 +109,7 @@ for testcase in testcases:
             missed[dictnum].append(cor)
         # Check on the suggestions provided
         suggs = dict.suggest(mis)
-	if cor not in suggs:
+        if cor not in suggs:
             incorrect[dictnum].append((mis,cor))
             dists[dictnum].append(-1)
         else:

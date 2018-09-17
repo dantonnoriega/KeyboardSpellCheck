@@ -12,8 +12,6 @@ except ImportError:
     ez_setup.use_setuptools()
     from setuptools import setup, find_packages, Extension
 
-from distutils.archive_util import make_archive
-
 import sys
 import os
 import shutil
@@ -37,7 +35,7 @@ NAME = "pyenchant"
 DESCRIPTION = "Python bindings for the Enchant spellchecking system"
 AUTHOR = "Ryan Kelly"
 AUTHOR_EMAIL = "ryan@rfk.id.au"
-URL = "http://packages.python.org/pyenchant/"
+URL = "https://pythonhosted.org/pyenchant/"
 LICENSE = "LGPL"
 KEYWORDS = "spelling spellcheck enchant"
 CLASSIFIERS = [
@@ -66,7 +64,7 @@ def osx_make_lib_relocatable(libpath,bundle_dir=None):
     """Make an OSX dynamic lib re-locatable by changing dep paths.
 
     This function adjusts the path information stored in the given dynamic
-    library, so that is can be bundled into a directory and restributed.
+    library, so that is can be bundled into a directory and redistributed.
     It returns a list of any dependencies that must also be included in the
     bundle directory.
     """
@@ -75,17 +73,19 @@ def osx_make_lib_relocatable(libpath,bundle_dir=None):
     import subprocess
     import shutil
     def do(*cmd):
+        cmd = [c.encode("utf8") for c in cmd]
         subprocess.Popen(cmd).wait()
     def bt(*cmd):
-        return subprocess.Popen(cmd,stdout=subprocess.PIPE).stdout.read()
+        cmd = [c.encode("utf8") for c in cmd]
+        return subprocess.Popen(cmd,stdout=subprocess.PIPE).stdout.read().decode("utf8")
     (dirnm,nm) = os.path.split(libpath)
     if bundle_dir is None:
         bundle_dir = dirnm
     #  Fix the installed name of the lib to be relative to rpath.
     if libpath.endswith(".dylib"):
         do("install_name_tool","-id","@loader_path/"+nm,libpath)
-    #  Fix references to any non-core dependencies, and copy them into
-    #  the target dir so they will be fixed up in turn.
+    #  Fix references to any non-core dependencies, and add them to the list
+    #  so they will be copied and fixed-up in turn.
     deps = []
     deplines = bt("otool","-L",libpath).split("\n")
     if libpath.endswith(".dylib"):
@@ -97,7 +97,9 @@ def osx_make_lib_relocatable(libpath,bundle_dir=None):
         if not dep:
             continue
         dep = dep.split()[0]
-        if dep.startswith("/System/") or dep.startswith("/usr/"):
+        if dep.startswith("/System/"):
+            continue
+        if dep.startswith("/usr/") and not dep.startswith("/usr/local"):
             continue
         depnm = os.path.basename(dep)
         numdirs = len(dirnm[len(bundle_dir):].split("/")) - 1
@@ -112,16 +114,19 @@ def osx_bundle_lib(libpath):
     if sys.platform != "darwin":
         raise RuntimeError("only works on osx")
     bundle_dir = os.path.dirname(libpath)
+    # Remove any old libraries from  previous build.
     for nm in os.listdir(bundle_dir):
         oldpath = os.path.join(bundle_dir,nm)
         if oldpath != libpath and os.path.isfile(oldpath):
             os.unlink(oldpath)
+    # Copy in and relocate all its dependencies, and theirs, and so-on.
     todo = osx_make_lib_relocatable(libpath,bundle_dir)
     for deppath in todo:
+        print("MAKING RELOCATABLE: " + deppath)
         depnm = os.path.basename(deppath)
         bdeppath = os.path.join(bundle_dir,depnm)
         if not os.path.exists(bdeppath):
-            shutil.copy2(deppath,bdeppath)
+            shutil.copyfile(deppath,bdeppath)
             todo.extend(osx_make_lib_relocatable(bdeppath,bundle_dir))
 
 #
@@ -186,14 +191,14 @@ if sys.platform in ("win32","darwin",):
           if dictName[-3:] in ["txt","dic","aff"]:
             print("COPYING: " + dictName)
             shutil.copy(os.path.join(dictPath,dictName),
-			os.path.join(".","enchant","share","enchant","myspell"))
+                        os.path.join(".","enchant","share","enchant","myspell"))
       dictPath = os.path.join(BINDEPS,"share","enchant","ispell")
       if os.path.isdir(dictPath):
         for dictName in os.listdir(dictPath):
-          if dictName.endswith("hash") or dictName == "README.txt":
+          if dictName.endswith("hash") or dictName == "README.rst":
             print("COPYING: " + dictName)
             shutil.copy(os.path.join(dictPath,dictName),
-			os.path.join(".","enchant","share","enchant","ispell"))
+                        os.path.join(".","enchant","share","enchant","ispell"))
   except EnvironmentError:
     (_,e,_) = sys.exc_info()
     if e.errno not in (errno.ENOENT,):
@@ -226,41 +231,3 @@ setup(name=NAME,
       include_package_data=True,
       test_suite="enchant.tests.buildtestsuite",
      )
-
-
-dist_dir = os.path.join(os.path.dirname(__file__),"dist")
-if os.path.exists(dist_dir):
-  for nm in os.listdir(dist_dir):
-    #  Rename any eggs to make it clear they're platform-specific.
-    #  This isn't done by default because we don't build any extension modules,
-    #  but rather bundle our libs as data_files.
-    if nm.endswith("py%d.%d.egg" % sys.version_info[:2]):
-        if sys.platform == "win32":
-            platform = "win32"
-        elif sys.platform == "darwin":
-            platform = "macosx-10.4-universal"
-        else:
-            continue
-        newname = nm.rsplit(".",1)[0] + "-" + platform + ".egg"
-        newpath = os.path.join(dist_dir,newname)
-        if os.path.exists(newpath):
-            os.unlink(newpath)
-        os.rename(os.path.join(dist_dir,nm),newpath)
-    #  Rename any mpkgs to give better platform info, and zip them up
-    #  for easy uploading to PyPI.
-    elif nm.endswith(".mpkg"):
-        if sys.platform != "darwin":
-            continue
-        platform = "macosx-10.4-universal"
-        if platform in nm:
-            continue
-        newname = nm.rsplit("macosx",1)[0] + platform + ".mpkg"
-        newpath = os.path.join(dist_dir,newname)
-        if os.path.exists(newpath):
-            shutil.rmtree(newpath)
-        os.rename(os.path.join(dist_dir,nm),newpath)
-        if os.path.exists(newpath+".zip"):
-            os.unlink(newpath+".zip")
-        make_archive(newpath,"zip",dist_dir,newname)
-        shutil.rmtree(newpath)
-

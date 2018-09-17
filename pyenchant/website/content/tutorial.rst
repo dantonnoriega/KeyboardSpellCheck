@@ -12,40 +12,17 @@ This page offers a quick tutorial to get up and running with the PyEnchant packa
 Installing PyEnchant
 ====================
 
-Windows Users
--------------
-
-Download the pre-built Windows installer from the download page and run it to install PyEnchant. It will place the 'enchant' module in your Python site-packages directory.
-
-As of PyEnchant 1.5.0 there is a single installer for all versions of Python. It has been successfully testing with Python 2.5 and Python 2.6.
-
-
-Mac OS X Users
---------------
-
-Download the pre-built OSX installer from the download page and execute it in the finder. It will place the 'enchant' module in your Python site-packages directory.
-
-There are also eggs available for users who prefer them.
-
-
-Other Platforms
----------------
+Installing the Package
+----------------------
 
 Your operating system distributor may provide PyEnchant via their own packaging system - please check there first.
 
-If a package is not provided by your operating system distributor, you will need to install from source.
+If a package is not provided by your operating system distributor, you will need to install one of the pre-build binary distributions or build the package from source.  The easiest way to install PyEnchant is via `pip <https://pip.readthedocs.io/en/latest/>`_ which will locate and install the appropriate pre-built distribution for your platform.  Simply::
 
-If you have an active internet connection, the following procedure will automatically download any additional files required to complete the installation. If not, you need to ensure that you have the latest version of setuptools installed. The `Easy Install Setup Guide <http://peak.telecommunity.com/DevCenter/EasyInstall#installation-instructions>`_ might help you here.
+    pip install pyenchant
 
-   1. Install Enchant as described on the `enchant website <http://www.abisource.com/enchant/>`_.
-   2. Install PyEnchant using the standard Python setuptools procedure:
-         1. :doc:`Download<download>` and untar the source files.
-         2. Enter the distribution directory, which contains the file 'setup.py'.
-         3. Execute the command::
 
-                python setup.py install
-
-         4. Please refer to the `distutils documentation <http://docs.python.org/inst/inst.html>`_ and the following `notes on setuptools <http://peak.telecommunity.com/DevCenter/setuptools#what-your-users-should-know>`_ for help on installing Python modules in this manner. 
+Windows users may also download the pre-built Windows installer from the download page and run it to install PyEnchant. It will place the 'enchant' module in your Python site-packages directory.
 
 
 Adding Language Dictionaries
@@ -217,10 +194,10 @@ The module enchant.checker.wxSpellCheckerDialog provides the class wxSpellChecke
 
 It will pop up a simple spellchecking dialog like the one shown here. Each spelling error is highlighted in turn, with the buttons offering a range of options for how to deal with the error:
 
-    * Ignore: ignore the current occurence of the word
-    * Ignore All: ignore the current and all future occurances of the word
-    * Replace: replace the current occurence with the corrected word
-    * Replace All: replace the current and all future occurences with the corrected word
+    * Ignore: ignore the current occurrence of the word
+    * Ignore All: ignore the current and all future occurrences of the word
+    * Replace: replace the current occurrence with the corrected word
+    * Replace All: replace the current and all future occurrences with the corrected word
     * Add: add the word to the user's personal dictionary
 
 ::
@@ -280,7 +257,7 @@ As shown by this simple example, the CmdLineChecker prints each error it encount
 Tokenization: splitting text into words
 ---------------------------------------
 
-An important task in spellchecking is splitting a body of text up into its constituative words, each of which is then passed to a Dict object for checking. PyEnchant provides the enchant.tokenize module to assist with this task. The purpose of this module is to provide an appropriate tokenization function which can be used to split the text. Usually, all that is required is the get_tokenizer function::
+An important task in spellchecking is splitting a body of text up into its constitutive words, each of which is then passed to a Dict object for checking. PyEnchant provides the enchant.tokenize module to assist with this task. The purpose of this module is to provide an appropriate tokenization function which can be used to split the text. Usually, all that is required is the get_tokenizer function::
 
   >>> from enchant.tokenize import get_tokenizer
   >>> tknzr = get_tokenizer("en_US")
@@ -303,7 +280,7 @@ A chunker is simply a special tokenizer function that breaks text up into large 
 
   >>> from enchant.tokenize import get_tokenizer, HTMLChunker
   >>> 
-  >>> tknzr = get_tokenizer("en_US"])
+  >>> tknzr = get_tokenizer("en_US")
   >>> [w for w in tknzr("this is <span class='important'>really important</span> text")]
   [('this', 0), ('is', 5), ('span', 9), ('class', 14), ('important', 21), ('really', 32), ('important', 39), ('span', 50), ('text', 56)]
   >>> 
@@ -328,7 +305,8 @@ A filter is simply a wrapper around a tokenizer that can (1) drop certain words 
   >>> from enchant.tokenize import get_tokenizer, EmailFilter
   >>> 
   >>> tknzr = get_tokenizer("en_US")
-  >>> [w for w in tknzr("send an email to fake@example.com please")] [('send', 0), ('an', 5), ('email', 8), ('to', 14), ('fake@example.com', 17), ('please', 34)]
+  >>> [w for w in tknzr("send an email to fake@example.com please")]
+  [('send', 0), ('an', 5), ('email', 8), ('to', 14), ('fake@example.com', 17), ('please', 34)]
   >>> 
   >>> tknzr = get_tokenizer("en_US",[EmailFilter])
   >>> [w for w in tknzr("send an email to fake@example.com please")]
@@ -412,7 +390,7 @@ You may have noticed that the top-level functions provided by the enchant module
 Provider Ordering
 ~~~~~~~~~~~~~~~~~
 
-Which provider is used for which language is determined by the provider ordering of the Broker. This can be altered using the set_ordering method. This method accepts a language tag and a comma-seperated list of provider names in the order that they should be checked. A language tag of "*" means that the ordering should be the default for all languages where an explicit ordering has not been given.
+Which provider is used for which language is determined by the provider ordering of the Broker. This can be altered using the set_ordering method. This method accepts a language tag and a comma-separated list of provider names in the order that they should be checked. A language tag of "*" means that the ordering should be the default for all languages where an explicit ordering has not been given.
 
 The following example states that for American English the MySpell provider should be tried first, followed by the aspell provider. For all other languages, the ordering is reversed::
 
@@ -424,7 +402,7 @@ The following example states that for American English the MySpell provider shou
   >>> b.request_dict("en_GB").provider
   <Enchant: Aspell Provider>
 
-The user can also set their prefered ordering using enchant configuration files. For this reason, application programmers are discouraged from explicitly setting an ordering unless there is a compelling reason to do so.
+The user can also set their preferred ordering using enchant configuration files. For this reason, application programmers are discouraged from explicitly setting an ordering unless there is a compelling reason to do so.
 
 
 Extending enchant.tokenize
@@ -445,8 +423,8 @@ Packaging PyEnchant with py2exe
 -------------------------------
 
 
-PyEnchant depends on a large number of auxilliary files such as plugin libraries, dictionary files, etc. While py2exe does an excellent job of detecting static file dependencies, it cannot detect these files which are located at runtime.
+PyEnchant depends on a large number of auxiliary files such as plugin libraries, dictionary files, etc. While py2exe does an excellent job of detecting static file dependencies, it cannot detect these files which are located at runtime.
 
-To successfully package an application that uses PyEnchant, these auxilliary files must be explicitly included in the "data_files" argument to the setup function. The function enchant.utils.win32_data_files returns a list of files which can be used for this purpose.
+To successfully package an application that uses PyEnchant, these auxiliary files must be explicitly included in the "data_files" argument to the setup function. The function enchant.utils.win32_data_files returns a list of files which can be used for this purpose.
 
 

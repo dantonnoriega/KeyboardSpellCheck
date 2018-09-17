@@ -119,7 +119,6 @@ of words. Also need to "test" the (handling) of 'quoted' words."""
                 tknzr.set_offset(23)
                 self.assertEqual(tknzr.offset,23)
                 self.assertEqual(tknzr._tokenizer.offset,23)
-                self.assertEqual(tknzr._curtok.offset,3)
             if n == 8:
                 self.assertEqual(pos,23)
                 self.assertEqual(word,"it")
@@ -314,3 +313,16 @@ of words. Also need to "test" the handling of 'quoted' words."""
         for (itmO,itmV) in zip(outputT,tokenize_en(inputT)):
             self.assertEqual(itmO,itmV)
 
+    # XXX TODO: the myspell provider doesn't correctly interpret
+    # typographic apostrophe on OSX, disabling for now.
+    #def test_typographic_apostrophe_en(self):
+    #    """"Typographic apostrophes shouldn't be word separators in English."""
+    #    from enchant.tokenize import en
+    #    tknzr = wrap_tokenizer(basic_tokenize, en.tokenize)
+    #    input = u"They\u2019re here"
+    #    output = [(u"They\u2019re", 0), (u"here", 8)]
+    #    self.assertEqual(output, [i for i in tknzr(input)])
+    #    # Typographic apostrophe is only support for unicode inputs.
+    #    if str is not unicode:
+    #        output = [("They", 0), ("re", 7), ("here", 10)]
+    #        self.assertEqual(output, [i for i in tknzr(input.encode('utf8'))])
