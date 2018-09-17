@@ -71,12 +71,14 @@ def _e_path_possibilities():
         yield "libenchant.so.1"
         yield "libenchant.so"
     # See if ctypes can find the library for us, under various names.
-    yield find_library("enchant")
-    yield find_library("libenchant")
-    yield find_library("libenchant-1")
+    yield find_library("enchant-2")
+    yield find_library("libenchant-2")
+    yield find_library("libenchant-2.2")
     # Special-case handling for enchant installed by macports.
     if sys.platform == 'darwin':
-        yield "/opt/local/lib/libenchant.dylib"
+         # yield '/usr/local/Cellar/enchant/2.2.3/lib/libenchant-2.2.dylib' #homebrew
+         yield "/opt/local/lib/libenchant.dylib"
+
 
 
 # On win32 we ship a bundled version of the enchant DLLs.
